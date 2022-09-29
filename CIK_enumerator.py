@@ -44,11 +44,6 @@ async def main():
 
 asyncio.run(main())
 
-'''
-improvements:
- - multithread? analyze masscan's code
-'''
-
 #https://www.sec.gov/ix?doc=/Archives/edgar/data/ /
 '''
 If a user or application submits more than 10 requests per second to EDGAR websites, the SEC may limit further
