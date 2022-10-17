@@ -1,16 +1,13 @@
 import requests
 import personal_lib
 
-def file_enumerate(cik, output):
+def file_enumerate(cik, output):#func to crawl through each link to find files to analyze
     header = personal_lib.random_user_agent("dict")
 
     url = "https://www.sec.gov/Archives/edgar/data/"+ cik + "/"
     #try:
     response = requests.get(url, headers=header, timeout=5)
     response = response.text[response.text.find("Directory Listing for /Archives/edgar/data/"):response.text.find("</table>")]
-    #except Exception:
-    #print("failed")
-    #return 
 
     links = []
     while True:
@@ -38,7 +35,7 @@ def file_enumerate(cik, output):
 
     output.write(cik + ":" + str(files).replace("[", "").replace("]", "") + "\n")
 
-def main():
+def main():# I need to make this run with multiple threads, I will do the same thing as with the CIK-grabber
     f = open("CIKS.txt", "r")
     ciks = f.readlines()
     enumerated_files = open("enumerated_files.txt", "w+")
