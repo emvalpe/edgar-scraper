@@ -1,4 +1,2 @@
 # EDGAR-Scraper
-This is a set of python scripts designed to map the US government, specifically the SEC's database.
-
-Throughout this project I will be exploring the public information presented by the EDGAR DB. I will do my best to update this as I go.
+This is a set of python scripts designed to the SEC's EDGAR database. While the database itself is a great resource for investors it is much harder to lots of data collection and plotting. This repo will contain a set of step to enumerate the CIKs of every public company in America, find all of the fillings made to the SEC, and lastly look to find which companies are own by other companies. I was interested in exploring this question as well as practicing my usage of python to map the EDGAR database as quickly as possible.
