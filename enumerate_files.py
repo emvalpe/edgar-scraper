@@ -1,13 +1,22 @@
-import requests
 import personal_lib
 
-def file_enumerate(cik, output):#func to crawl through each link to find files to analyze
+import time as t
+import requests
+
+def file_enumerate(cik, output):
     header = personal_lib.random_user_agent("dict")
 
     url = "https://www.sec.gov/Archives/edgar/data/"+ cik + "/"
-    #try:
-    response = requests.get(url, headers=header, timeout=5)
-    response = response.text[response.text.find("Directory Listing for /Archives/edgar/data/"):response.text.find("</table>")]
+    try:
+        with requests.get(url, headers=header, timeout=5) as response:
+            response = response.text
+            response = response[response.find("Directory Listing for /Archives/edgar/data/"):response.find("</table>")]
+
+    except Exception:
+        print("failed at: " + cik)
+        t.sleep(.5)
+        file_enumerate(cik, output)
+        return
 
     links = []
     while True:
@@ -16,30 +25,36 @@ def file_enumerate(cik, output):#func to crawl through each link to find files t
     
         response = response[response.find('href="'):].replace('href="', "", 1)
         links.append(response[:response.find('"')].replace('"', "", 1))
-    
-        req = requests.get("https://www.sec.gov" + links[0], headers = header, timeout=5)
-        text = req.text
-        text = text[text.find("<table"):text.find("</table>")]
 
     files = []
-    while True:
-        if text.find('href="') == -1:
-            break
-
-        text = text[text.find('href="'):].replace('href="', "", 1)
-        fil = text[:text.find('"')].replace('"', "", 1)
-        if fil.find("html") == -1:
-            files.append(fil.replace("/Archives/edgar/data/", ""))
-
-    files = files[:-1]#file location https://www.sec.gov/Archives/edgar/data/
+    for i in links:
+        i = i.replace("/Archives/edgar/data/", "")
+        files.append(i[i.find("/")+1:])
+    #file location https://www.sec.gov/Archives/edgar/data/cik/
 
     output.write(cik + ":" + str(files).replace("[", "").replace("]", "") + "\n")
+    print(cik)
 
-def main():# I need to make this run with multiple threads, I will do the same thing as with the CIK-grabber
-    f = open("CIKS.txt", "r")
+def main():
+    f = open("ciks.txt", "r")
     ciks = f.readlines()
     enumerated_files = open("enumerated_files.txt", "w+")
-    for cik in ciks:
-        file_enumerate(cik, enumerated_files)
+
+    sets = []
+    mini = []
+    for i in ciks:
+        if len(mini) % 10 == 0:
+            sets.append(mini)
+            mini = []
+        mini.append(i.replace("\n", ""))
+    sets.append(mini)#to catch the leftover set
+    f.close()
+    
+    for bunch in sets:
+        for i in bunch:
+            file_enumerate(i, enumerated_files)
+            t.sleep(.2)
+    
+    enumerated_files.close()
 
 main()
