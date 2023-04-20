@@ -125,8 +125,8 @@ def analyze(company):#check filing type
 				owned = process_filling(response)
 				if owned != []:
 					for o in owned:
-						if o not in company["aquired"]:
-							company["aquired"].append(i + ":" + o)#write name of aquired company and filing
+						if o not in company["acquired"]:
+							company["acquired"].append(i + ":" + o)#write name of aquired company and filing
 					
 	return company
 		
