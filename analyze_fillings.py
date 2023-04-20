@@ -29,10 +29,20 @@ def find_aqui(sentence):
 
 	return output
 
-def connect_orgs(sent, loc):
+def find_symbols(organization):
+	bad_symbols = ["./", "#", "(", ";"]
+	loc = 0
+
+	for i in bad_symbols:
+		sec = organization.find(i)
+		if sec != -1 and loc < sec:
+			loc = sec
+
+	return loc
+
+def connect_orgs(sent, loc):#improve
 	org = ""
 	sentence = sent.text
-	#spl = sentence.split(" ")
 	chunks = []
 
 	for i in sent.noun_chunks:
@@ -44,7 +54,7 @@ def connect_orgs(sent, loc):
 
 	tokens = nlp(org.lower())
 	bal = False
-	for val in tokens:#removes any other garbage output, mostly statements like "Common Shares"/"the Option Price"
+	for val in tokens:
 		if val.tag_ == "NNP":
 			bal = True
 
@@ -60,26 +70,34 @@ def process_filling(response):
 		body = body.replace("\n", " ")
 
 	if body.find("acqui") != -1:
-		thingy = len(body)//100000
+		thingy = len(body)//500000
 
 		for i in range(thingy+1):
 			if thingy != 0:
 				try:
-					doc = nlp(body[i*100000:(i+1)*100000])
+					doc = nlp(body[i*500000:(i+1)*500000])
 				except Exception:
-					doc = nlp(body[i*100000:])
+					doc = nlp(body[i*500000:])
 			else:
 				doc = nlp(body)
 
 			for sentence in doc.sents:
 
-				search = (sentence.text).find("acquire")#expand to merge too
+				search = (sentence.text).find("acqui")#expand to merge too
 				if search != -1:
 					company = connect_orgs(sentence, find_aqui(sentence))
+
 					if company.find(", ") != -1 or company.find("  ") != -1:
 						company = company.replace("  ", " ")
 						company = company.replace(", ", " ")
-					
+
+					locs = find_symbols(company)
+
+					if locs != 0 and company[:locs].find(" ") == -1:
+						company = company[:locs]
+					elif locs != 0 and company[:locs].find(" ") != -1:
+						company = company[locs:]
+
 					if company not in output and company != "":
 						x = True
 						for i in output:
@@ -90,10 +108,8 @@ def process_filling(response):
 
 						if x == True:
 							output.append(company)
-
 	
 	return output
-
 
 def analyze(company):#check filing type
 	for i in company["filings"]["recent"]["accessionNumber"]:
@@ -109,9 +125,10 @@ def analyze(company):#check filing type
 				owned = process_filling(response)
 				if owned != []:
 					for o in owned:
-						if o not in company["Aquired"]:
-							print("Hit: " + o)
-							company["Aquired"].append(o)
+						if o not in company["aquired"]:
+							company["aquired"].append(i + ":" + o)#write name of aquired company and filing
+					
+	return company
 		
 	
 headers = personal.random_user_agent("SEC")
@@ -119,30 +136,35 @@ forms = ["10-K", "6-K"]#removed 8k and 10q, seems to still catch everything base
 
 nlp = spacy.load("en_core_web_sm")
 p = Path("./").iterdir()
+iterat = 0
+start = t.time()
 
-print("starting")
+print("Starting")
 for file in p:
 	new_info = []
-	if (file.name).find("Processed") != -1:
+	if (file.name).find("processed") != -1:
 		with file.open() as fr:
 			json_dict = json.load(fr)
 			
 			for i in json_dict:
 				if len(i.keys()) > 1:
-					analyze(i)
+					i = analyze(i)
+					if i["aquired"] != []:
+						print("Hits for %s:%s" % (i["name"], str(i["aquired"])))
 					new_info.append(i)
+				
+				iterat += 1
+				if(iterat%10000 == 0):
+					print("\niteration: " + str(iterat) + " Time(m): " + str((t.time()-start)/60) + "\n")
 
 			fr.close()
 
-		final = open((file.name).replace("Processed", "Final"), "w+")
+		final = open((file.name).replace("processed", "final"), "w+")
 		json.dump(new_info, final)
 		final.close()
-
 
 '''
 Issues:
  - mentioned some issues in comments
  - utf-8 encoding doesn't work for things like spanish chars, going to have to expand that
- - duplicate algorithm shouldn't just be a exact word check
-
 '''
