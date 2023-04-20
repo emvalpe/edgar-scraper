@@ -149,8 +149,8 @@ for file in p:
 			for i in json_dict:
 				if len(i.keys()) > 1:
 					i = analyze(i)
-					if i["aquired"] != []:
-						print("Hits for %s:%s" % (i["name"], str(i["aquired"])))
+					if i["acquired"] != []:
+						print("Hits for %s:%s" % (i["name"], str(i["acquired"])))
 					new_info.append(i)
 				
 				iterat += 1
