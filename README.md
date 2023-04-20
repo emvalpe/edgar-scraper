@@ -3,6 +3,7 @@ This is a set of python scripts designed to scrape the SEC's EDGAR database. Whi
 
 Step 1: Download bulk data from the SEC
     https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip
+    run: "python -m spacy download en_core_web_sm" in the mean time.
    
 Step 2: run "pip install -r requirements.txt" in the directory you installed this in, while you wait
 
