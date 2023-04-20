@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 #chdir
-p = Path("./submission").iterdir()
+p = Path("./submissions").iterdir()
 desired_keys = ["cik", "entityType", "sic", "sicDescription", "name", "tickers", "exchanges", "ein", "description", "category", "stateOfIncorporation", "formerNames", "filings"]
 
 it = 0
