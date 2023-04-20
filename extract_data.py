@@ -2,7 +2,7 @@ import os
 import json
 from pathlib import Path
 
-#chdir
+#https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip
 p = Path("./submissions").iterdir()
 desired_keys = ["cik", "entityType", "sic", "sicDescription", "name", "tickers", "exchanges", "ein", "description", "category", "stateOfIncorporation", "formerNames", "filings"]
 
@@ -31,7 +31,7 @@ for file in p:
 			if key in desired_keys:
 				company[key] = json_read_file[key]
 
-		company["Aquired"] = []	
+		company["acquired"] = []	
 		info_to_write.append(company)
 
 		
