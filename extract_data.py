@@ -12,7 +12,7 @@ info_to_write = []
 for file in p:
 
 	if it%99999 == 0 and it != 0:
-		file_to_write = open("Processed"+str(int(it/99999))+".json","w+")
+		file_to_write = open("processed"+str(int(it/99999))+".json","w+")
 		json.dump(info_to_write, file_to_write)
 		file_to_write.close()
 
