@@ -1,10 +1,11 @@
 import personal_lib as personal
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup#needs lxml
 import time as t
 
 import json
 from pathlib import Path
+import os
 
 import spacy
 
@@ -12,14 +13,17 @@ def file_request(url):
 	file_str = ''
 	try:
 		file_str = requests.get(url, headers=headers, timeout=5).text
-	except Exception:
+	except requests.ConnectionError:
 		t.sleep(1)
-		print("Error getting filling, retrying")
+		file_request(url)
+	except RecursionError:
+		t.sleep(100)
+		print("Error getting filling max recursion")
 		file_request(url)
 
 	return file_str
 
-def find_aqui(sentence):
+def find_acqui(sentence):
 	output = 0
 	for tokenized_text in range(len(sentence.ents)):
 		text = sentence.ents[tokenized_text].text
@@ -85,7 +89,7 @@ def process_filling(response):
 
 				search = (sentence.text).find("acqui")#expand to merge too
 				if search != -1:
-					company = connect_orgs(sentence, find_aqui(sentence))
+					company = connect_orgs(sentence, find_acqui(sentence))
 
 					if company.find(", ") != -1 or company.find("  ") != -1:
 						company = company.replace("  ", " ")
@@ -111,24 +115,34 @@ def process_filling(response):
 	
 	return output
 
-def analyze(company):#check filing type
-	for i in company["filings"]["recent"]["accessionNumber"]:
-		index = company["filings"]["recent"]["accessionNumber"].index(i)#check if form has subsection too, maybe idk
-		if company["filings"]["recent"]["form"][index] in forms:
+def analyze(file, output):#check filing type
+	while True:
+		line = file.readline()
+		if line == "" or line == "\n":continue
+		if not line:return
+		company = json.loads(line)
+		
+		iterat = 0
+		for i in company["filings"]["recent"]["accessionNumber"]:
+			if company["filings"]["recent"]["form"][iterat] in forms:
 
-			filing_url = "https://www.sec.gov/Archives/edgar/data/"+company["cik"]+"/"
-			fil = i.replace("-", "")
-			filing_url += fil + "/" + i + ".txt"
-			
-			response = file_request(filing_url)
-			if response != "":
-				owned = process_filling(response)
-				if owned != []:
-					for o in owned:
-						if o not in company["acquired"]:
-							company["acquired"].append(i + ":" + o)#write name of aquired company and filing
-					
-	return company
+				filing_url = "https://www.sec.gov/Archives/edgar/data/"+company["cik"]+"/"
+				fil = i.replace("-", "")
+				filing_url += fil + "/" + i + ".txt"
+				
+				response = file_request(filing_url)
+				if response != "":
+					owned = process_filling(response)
+					if owned != []:
+						for o in owned:
+							if o not in company["acquired"]:
+								company["acquired"].append(i + ":" + o)#write name of aquired company and filing
+						
+						output.write("\n"+json.dumps(company))#output per company, minimize footprint on memory
+						print("Hits for %s:%s" % (company["name"], str(company["acquired"])))	
+			iterat += 1
+
+		output.close()
 		
 	
 headers = personal.random_user_agent("SEC")
@@ -144,24 +158,14 @@ for file in p:
 	new_info = []
 	if (file.name).find("processed") != -1:
 		with file.open() as fr:
-			json_dict = json.load(fr)
-			
-			for i in json_dict:
-				if len(i.keys()) > 1:
-					i = analyze(i)
-					if i["acquired"] != []:
-						print("Hits for %s:%s" % (i["name"], str(i["acquired"])))
-					new_info.append(i)
-				
-				iterat += 1
-				if(iterat%10000 == 0):
-					print("\niteration: " + str(iterat) + " Time(m): " + str((t.time()-start)/60) + "\n")
+			try:#remove previous output file
+				os.remove(str(file.name).replace("processed", "final"))
+			except FileNotFoundError:
+				pass
 
+			analyze(fr, open((file.name).replace("processed", "final"), "a+"))
 			fr.close()
-
-		final = open((file.name).replace("processed", "final"), "w+")
-		json.dump(new_info, final)
-		final.close()
+		
 
 '''
 Issues:
