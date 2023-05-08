@@ -2,40 +2,36 @@ import os
 import json
 from pathlib import Path
 
-#https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip
+#chdir
 p = Path("./submissions").iterdir()
 desired_keys = ["cik", "entityType", "sic", "sicDescription", "name", "tickers", "exchanges", "ein", "description", "category", "stateOfIncorporation", "formerNames", "filings"]
 
-it = 0
-info_to_write = []
+try:
+	os.remove("processed.json")
+except Exception:
+	pass
 
 for file in p:
 
-	if it%99999 == 0 and it != 0:
-		file_to_write = open("processed"+str(int(it/99999))+".json","w+")
-		print("writing to file: " + str(it/99999) + " time")
-		json.dump(info_to_write, file_to_write)
-		file_to_write.close()
-
-		info_to_write = []
-
 	company = {}
-
+	file_to_write = open("processed"+".json","a+")
 	if file.is_file() == True:
-		with file.open() as f:
-			try:
-				json_read_file = json.load(f)
-			except json.decoder.JSONDecodeError:
-				print("error")
+		with open("./submissions/"+file.name, "r") as f:
+			while True:
+				line = f.readline()
+				if not line:break
+				try:
+					read = json.loads(line)
+				except json.decoder.JSONDecodeError:
+					print("error")
 			
-		for key in json_read_file.keys():
+		for key in read.keys():
 			if key in desired_keys:
-				company[key] = json_read_file[key]
+				company[key] = read[key]
 
-		company["acquired"] = []	
-		info_to_write.append(company)
+		if company != {}:
+			company["acquired"] = []	
+			file_to_write.write("\n"+json.dumps(company))
 
-		
-	it += 1
-
+file_to_write.close()
 print("Completed Successfully")
