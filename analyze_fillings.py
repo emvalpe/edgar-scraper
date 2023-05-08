@@ -166,7 +166,7 @@ for file in p:
 			analyze(fr, open((file.name).replace("processed", "final"), "a+"))
 			fr.close()
 		
-
+#os.system("python3 emails.py completed-the-SEC-processing")
 '''
 Issues:
  - mentioned some issues in comments
