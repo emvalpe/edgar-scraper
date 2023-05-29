@@ -1,5 +1,7 @@
 import personal_lib as personal
 import requests
+import urllib3
+
 from bs4 import BeautifulSoup#needs lxml
 import time as t
 
@@ -9,10 +11,10 @@ import os
 
 import spacy
 
-def file_request(url):
+def file_request(url, to=5):
 	file_str = ''
 	try:
-		file_str = requests.get(url, headers=headers, timeout=5).text
+		file_str = requests.get(url, headers=headers, timeout=to).text
 	except requests.ConnectionError:
 		t.sleep(1)
 		file_request(url)
@@ -20,6 +22,9 @@ def file_request(url):
 		t.sleep(100)
 		print("Error getting filling max recursion")
 		file_request(url)
+	except Exception:#supported to catch timeout errors idk why a specific except wont work
+		t.sleep(1)
+		file_request(url, to=30)
 
 	return file_str
 
@@ -142,7 +147,7 @@ def analyze(file, output):#check filing type
 						print("Hits for %s:%s" % (company["name"], str(company["acquired"])))	
 			iterat += 1
 
-		output.close()
+	output.close()
 		
 	
 headers = personal.random_user_agent("SEC")
@@ -165,8 +170,8 @@ for file in p:
 
 			analyze(fr, open((file.name).replace("processed", "final"), "a+"))
 			fr.close()
-		
-#os.system("python3 emails.py completed-the-SEC-processing")
+os.system("python3 emails.py completed the SEC processing")
+
 '''
 Issues:
  - mentioned some issues in comments
