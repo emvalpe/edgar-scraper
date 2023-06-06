@@ -14,4 +14,4 @@ Step 4: Run extract_data.py to reformat the downloaded data
 Step 5: Run analyze_fillings.py, this will analyze all of the fillings extracted by the previous file. This will take multiple hours to complete so keep that in mind.
 
 #List of Improvements to make:
--optimize filtering of text(colroama and things)
+ - there are some filter issues I can't seem to fix
