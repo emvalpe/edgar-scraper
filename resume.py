@@ -39,10 +39,21 @@ ite = 0
 while True:
 	line = processed.readline()
 	if line == "":break
-	ite+=1
-	line = json.loads(line)
+	elif line == "\n":continue
+	
+	try:
+		line = json.loads(line)
+	except Exception:
+		pass
+
 	if line["cik"] == last["cik"]:
 		print(line)
 		break
 
-analyze(processed, open("final.json", "a+"), total - ite)
+	ite+=1
+
+processed.close()
+del processed
+
+print("Files processed: "+str(ite))
+analyze_fillings.analyze(open("processed.json", "r"), open("final.json", "a+"), total - ite, resume=True, proc=ite)
