@@ -22,6 +22,8 @@ def rainbow(text):
 
 def file_request(url, to=5):
 	file_str = ''
+	headers = personal.random_user_agent("SEC")
+
 	try:
 		file_str = requests.get(url, headers=headers, timeout=to).text
 	except requests.ConnectionError:
@@ -59,7 +61,7 @@ def find_symbols(organization):
 
 	return organization
 
-def connect_orgs(sent, loc):#setup something to state entities and further check the sentence
+def connect_orgs(sent, loc, nlp):#setup something to state entities and further check the sentence
 	org = ""
 	sentence = sent.text
 	chunks = []
@@ -91,7 +93,7 @@ def connect_orgs(sent, loc):#setup something to state entities and further check
 
 	return org
 
-def process_filling(response):
+def process_filling(response, nlp):
 	output = []
 	body = BeautifulSoup(response, "xml").get_text()
 	length = len(body)
@@ -124,7 +126,7 @@ def process_filling(response):
 					search = (sentence.text).find("acqui")#expand to "merge" too
 					if search != -1 and (sentence.text).find("reacqui"):
 						#print(Fore.GREEN+sentence.text)
-						company = connect_orgs(sentence, rep[0])#check this function
+						company = connect_orgs(sentence, rep[0], nlp)#check this function
 						del rep[0]
 						if company.find(", ") != -1 or company.find("  ") != -1:
 							company = company.replace("  ", " ")
@@ -146,9 +148,17 @@ def process_filling(response):
 	
 	return output
 
-def analyze(file, output, total):
+def analyze(file, output, total, resume=False, proc=0):
 	ite = 0
+	nlp = spacy.load("en_core_web_sm")
+	forms = ["10-K", "6-K", "8k"]#removed 10q, seems to still catch everything based on current testing
 	start = t.time()
+
+	if resume==True:
+		print("Resuming at: " + str(ite) + "/" + str(total+ite))
+		for i in range(proc):
+			file.readline()
+
 	while True:
 		line = file.readline()
 		if line == "" or line == "\n":continue
@@ -158,7 +168,7 @@ def analyze(file, output, total):
 		#print(rainbow(company["name"]))
 		if ite%100 == 0:
 			end = t.time()
-			print(Fore.GREEN+str(ite)+"\\"+str(total)+" with a time(min): "+str((end-start)/60) + " rate of(comapnies/sec): "+str(ite/(end-start)))
+			print(Fore.GREEN+str(ite)+"\\"+str(total-proc)+" with a time(min): "+str((end-start)/60) + " rate of(comapnies/sec): "+str(ite/(end-start)))
 
 		iterat = 0
 		for i in company["filings"]["recent"]["accessionNumber"]:
@@ -170,7 +180,7 @@ def analyze(file, output, total):
 				
 				response = file_request(filing_url)
 				if response != "":
-					owned = process_filling(response)
+					owned = process_filling(response, nlp)
 					if owned != []:
 						for o in owned:
 							if o not in company["acquired"]:
@@ -184,36 +194,35 @@ def analyze(file, output, total):
 
 	output.close()
 		
+def start():	
 	
-headers = personal.random_user_agent("SEC")
-forms = ["10-K", "6-K", "8k"]#removed 10q, seems to still catch everything based on current testing
 
-nlp = spacy.load("en_core_web_sm")
-iterat = 0
-start = t.time()
+	iterat = 0
+	start = t.time()
 
-temp = open("processed.json", "r")
-total = 0
-while True:
-	line = temp.readline()
-	if not line:break
-	else:total+=1
-del temp
+	temp = open("processed.json", "r")
+	total = 0
+	while True:
+		line = temp.readline()
+		if not line:break
+		else:total+=1
+	del temp
 
-print(rainbow("Total Entities: ")+str(total))
+	print(rainbow("Total Entities: ")+str(total))
 
-file = open("processed.json", "r")
+	file = open("processed.json", "r")
 
-try:
-	os.remove(str(file.name).replace("processed", "final"))
-except FileNotFoundError:
-	pass
+	try:
+		os.remove(str(file.name).replace("processed", "final"))
+	except FileNotFoundError:
+		pass
 
-analyze(file, open("final.json", "a+"), total)
-file.close()
-			
-os.system("python3 emails.py completed the SEC processing")
+	analyze(file, open("final.json", "a+"), total)
+	file.close()
+				
+	os.system("python3 emails.py completed the SEC processing")
 
+#start()
 '''
 Issues:
  - connect_org function has some issues with the ML network being used stated in code also remove SEC things
