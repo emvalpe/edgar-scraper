@@ -225,7 +225,7 @@ def start():
 				
 	os.system("python3 emails.py completed the SEC processing")
 
-start()
+#start()
 '''
 Issues:
  - connect_org function has some issues with the ML network being used stated in code also remove SEC things
