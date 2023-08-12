@@ -16,12 +16,15 @@ import analyze_fillings
 final = open("final.json", "r")
 
 last = ""
+index = 0
 while True:
 	line = final.readline()
 	if line == "":break
-
+	index+=1
 	last = line
-last = json.loads(last)
+
+index = index - 1
+last = json.loads(last)#where you left off
 final.close()
 
 temp = open("processed.json", "r")
@@ -30,30 +33,7 @@ while True:
 	line = temp.readline()
 	if not line:break
 	else:total+=1
-del temp
+temp.close()
 
-#cik can be a good way to read until
-processed = open("processed.json", "r")
-
-ite = 0
-while True:
-	line = processed.readline()
-	if line == "":break
-	elif line == "\n":continue
-	
-	try:
-		line = json.loads(line)
-	except Exception:
-		pass
-
-	if line["cik"] == last["cik"]:
-		print(line)
-		break
-
-	ite+=1
-
-processed.close()
-del processed
-
-print("Files processed: "+str(ite))
-analyze_fillings.analyze(open("processed.json", "r"), open("final.json", "a+"), total - ite, resume=True, proc=ite)
+analyze_fillings.analyze(open("processed.json", "r"), open("final.json", "a+"), total=total, resume=True, prog=index)
+os.system("python3 emails.py completed the SEC processing")
