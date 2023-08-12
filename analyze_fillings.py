@@ -148,55 +148,61 @@ def process_filling(response, nlp):
 	
 	return output
 
-def analyze(file, output, total, resume=False, proc=0):
-	ite = 0
+def analyze(file, output, total, resume=False, prog=0):
 	nlp = spacy.load("en_core_web_sm")
 	forms = ["10-K", "6-K", "8k"]#removed 10q, seems to still catch everything based on current testing
 	start = t.time()
+	#names = []
+	ite = 0
 
 	if resume==True:
-		print("Resuming at: " + str(ite) + "/" + str(total+ite))
-		for i in range(proc):
-			file.readline()
+		print("Resuming at: " + str(prog) + "/" + str(total))
 
 	while True:
 		line = file.readline()
-		if line == "" or line == "\n":continue
-		if not line:return
-		ite+=1
-		company = json.loads(line)
-		#print(rainbow(company["name"]))
-		if ite%100 == 0:
-			end = t.time()
-			print(Fore.GREEN+str(ite)+"\\"+str(total-proc)+" with a time(min): "+str((end-start)/60) + " rate of(comapnies/sec): "+str(ite/(end-start)))
+		if line == "":break
+		if line.replace("\n", "") == "":continue
+		
+		if ite <= prog:
+			ite+=1
+			continue
+		else:
+			prog+=1
+			company = json.loads(line)
+			'''
+			if company["name"] in names:continue
+			else:names.append(company["name"])
+			'''
+			#print(rainbow(company["name"]))
+			if prog%100 == 0:
+				end = t.time()
+				print(Fore.GREEN+str(prog)+"\\"+str(total)+" with a time(min): "+str((end-start)/60) + " rate of(comapnies/sec): "+str(prog/(end-start)))
 
-		iterat = 0
-		for i in company["filings"]["recent"]["accessionNumber"]:
-			if company["filings"]["recent"]["form"][iterat] in forms:
+			iterat = 0
+			for i in company["filings"]["recent"]["accessionNumber"]:
+				if company["filings"]["recent"]["form"][iterat] in forms:
 
-				filing_url = "https://www.sec.gov/Archives/edgar/data/"+company["cik"]+"/"
-				fil = i.replace("-", "")
-				filing_url += fil + "/" + i + ".txt"
-				
-				response = file_request(filing_url)
-				if response != "":
-					owned = process_filling(response, nlp)
-					if owned != []:
-						for o in owned:
-							if o not in company["acquired"]:
-								company["acquired"].append(i + ":" + o)
-						
-						output.write("\n"+json.dumps(company))
-							
-			iterat += 1
-
-		if company["acquired"] != []: print(Fore.YELLOW + "Hits for %s:%s" % (company["name"], str(company["acquired"])))	
+					filing_url = "https://www.sec.gov/Archives/edgar/data/"+company["cik"]+"/"
+					fil = i.replace("-", "")
+					filing_url += fil + "/" + i + ".txt"
+					
+					response = file_request(filing_url)
+					if response != "":
+						owned = process_filling(response, nlp)
+						if owned != []:
+							for o in owned:
+								if o not in company["acquired"]:
+									company["acquired"].append(i + ":" + o)
+				iterat += 1
+			
+			ite+=1
+			output.write("\n"+json.dumps(company))
+			if company["acquired"] != []: print(Fore.YELLOW + "Hits for %s:%s" % (company["name"], str(company["acquired"])))	
 
 	output.close()
 		
 def start():	
 	
-
 	iterat = 0
 	start = t.time()
 
@@ -211,18 +217,15 @@ def start():
 	print(rainbow("Total Entities: ")+str(total))
 
 	file = open("processed.json", "r")
-
-	try:
-		os.remove(str(file.name).replace("processed", "final"))
-	except FileNotFoundError:
-		pass
+	try:os.remove("final.json")
+	except FileNotFoundError:pass
 
 	analyze(file, open("final.json", "a+"), total)
 	file.close()
 				
 	os.system("python3 emails.py completed the SEC processing")
 
-#start()
+start()
 '''
 Issues:
  - connect_org function has some issues with the ML network being used stated in code also remove SEC things
