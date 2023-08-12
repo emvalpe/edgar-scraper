@@ -11,9 +11,10 @@ Step 3: Extract downloaded file in this project's folder
 
 Step 4: Run extract_data.py to reformat the downloaded data
 
-Step 5: Run analyze_fillings.py, this will analyze all of the fillings extracted by the previous file. This will take multiple hours to complete so keep that in mind.
+Step 5: Run start.py, this will analyze all of the fillings extracted by the previous file. This will take multiple days(42 is my current estimate) to complete so keep that in mind.
  - If you ever stop the execution of this run resume.py to continue execution
 
 #List of Improvements to make:
  - there are some filter issues I can't seem to fix
+ - CUDA errors with the ml too
 
