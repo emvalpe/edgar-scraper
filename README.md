@@ -8,6 +8,7 @@ Step 1: Download bulk data from the SEC
 Step 2: run "pip install -r requirements.txt" in the directory you installed this in, while you wait
 
 Step 3: Extract downloaded file in this project's folder
+- mkdir /submissions && unzip submissions.zip -d /submissions
 
 Step 4: Run extract_data.py to reformat the downloaded data
 
