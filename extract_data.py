@@ -12,10 +12,10 @@ try:
 except Exception:
 	pass
 
+file_to_write = open("processed"+".json","w+")
 for file in p:
 
 	company = {}
-	file_to_write = open("processed"+".json","a+")
 	if file.is_file() == True and str(file.name).find("submissions") == -1:
 		with open("./submissions/"+file.name, "r") as f:
 			while True:
@@ -37,13 +37,13 @@ for file in p:
 					for z in excess:
 						filee = json.load(open("./submissions/"+z["name"],))
 						for kem in company["filings"]["recent"].keys():
-							company["filings"]["recent"][kem].append(filee[kem])
+							company["filings"]["recent"][kem] = company["filings"]["recent"][kem] + filee[kem]
 					
-			except KeyError:
-				pass
+			except KeyError as e:
+				print(e)
 
 			company["acquired"] = []	
-			file_to_write.write("\n"+json.dumps(company))
+			file_to_write.write(json.dumps(company)+"\n")
 		else:continue
 
 file_to_write.close()
