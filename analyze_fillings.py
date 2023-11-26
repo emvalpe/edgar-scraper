@@ -28,14 +28,14 @@ def file_request(url, to=5):
 		file_str = requests.get(url, headers=headers, timeout=to).text
 	except requests.ConnectionError:
 		t.sleep(1)
-		file_request(url)
+		file_str = file_request(url)
 	except RecursionError:
 		t.sleep(100)
 		print("Error getting filling max recursion")
-		file_request(url)
+		file_str = file_request(url)
 	except Exception:#supported to catch timeout errors idk why a specific except wont work
 		t.sleep(1)
-		file_request(url, to=30)
+		file_str = file_request(url, to=30)
 
 	return file_str
 
@@ -94,8 +94,40 @@ def connect_orgs(sent, loc, nlp):#setup something to state entities and further 
 	return org
 
 def process_filling(response, nlp):
-	output = []
-	body = BeautifulSoup(response, "xml").get_text()
+	output = []#here
+	result = (response).replace("\u2019", "'").replace("\t", " ")
+	doc_body = ""
+
+	if result.find("<TYPE>") != -1:
+		typ = result[result.find("<TYPE>")+6:]
+		newl = typ.find("\n")
+		typ = typ[:newl]
+		if typ == "10-Q" or typ.find("10-Q") != -1:
+			hunt = True
+
+	if result.find("<text>") != -1:
+		doc_body=(result[result.find("<text>"):result.find("</text>")])
+	elif result.find("<TEXT>") != -1:
+		doc_body=(result[result.find("<TEXT>"):result.find("</TEXT>")])
+
+	if doc_body == "":return
+
+	doc = doc_body
+	is_html = True
+	bs = ""
+
+	if doc[:20].find("<xbrl>") != -1:#modern
+		bs = BeautifulSoup(doc[doc.find("<?xml"):doc.find("</xml>")], "xml").get_text()
+	elif doc[:21].find("html") != -1:#second oldest
+		bs = BeautifulSoup(doc[doc.find("<html"):doc.find("</html>")].replace("..", " "), "html.parser").get_text()
+	else:#oldest
+		bs = BeautifulSoup(doc, "html.parser").get_text()
+
+	if bs == "":
+		print("failed here2")
+		return
+
+	body = bs#to here are untested edits
 	length = len(body)
 
 	if body.find("\n") != -1:#problematic if a lot of spaces are removed
@@ -189,7 +221,7 @@ def analyze(file, output, total, resume=False, prog=0):
 					response = file_request(filing_url)
 					if response != "":
 						owned = process_filling(response, nlp)
-						if owned != []:
+						if owned != [] and owned:
 							for o in owned:
 								if o not in company["acquired"]:
 									company["acquired"].append(i + ":" + o)
