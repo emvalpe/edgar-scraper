@@ -18,4 +18,4 @@ Step 5: Run start.py, this will analyze all of the fillings extracted by the pre
 #List of Improvements to make:
  - there are some filter issues I can't seem to fix
  - CUDA errors with the ml too
-
+ - https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent
